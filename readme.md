@@ -1,4 +1,4 @@
-# YC Scout 🚀
+# RAG-Based-Document-Retrieval-System 🚀
 
 An intelligent RAG-powered (Retrieval-Augmented Generation) search and chatbot system for Y Combinator companies, leveraging state-of-the-art LLM technology. Built with a powerful FastAPI backend featuring FAISS and Elasticsearch for semantic search, integrated with Llama-3.3-70B through Groq for advanced natural language processing, and a modern React frontend for seamless user interaction.
 
