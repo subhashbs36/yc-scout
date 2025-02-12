@@ -1,0 +1,9 @@
+torch
+transformers
+fastapi
+elasticsearch==7.10.0
+groq
+faiss-cpu
+python-dotenv
+sentence-transformers
+chromadb
