@@ -69,7 +69,7 @@ An intelligent RAG-powered (Retrieval-Augmented Generation) search and chatbot s
 - Node.js 18+ and npm
 - Python 3.12.6
 - Groq API key
-- Elasticsearch 8.x
+- Elasticsearch 7.10.0
 
 ### Backend Setup
 ```bash
