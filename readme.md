@@ -8,6 +8,11 @@ An intelligent RAG-powered (Retrieval-Augmented Generation) search and chatbot s
 ![Tags](https://img.shields.io/badge/Stack-Full_Stack-red)
 ![Tags](https://img.shields.io/badge/Architecture-Microservices-purple)
 
+## 📋 System Overview
+
+![System Architecture](images/architecture.png)
+*High-level architecture showing the integration of RAG, FAISS, Elasticsearch, and Llama-3.3-70B*
+
 ## 🌟 Key Features
 
 ### 🤖 AI & ML Capabilities
@@ -31,6 +36,10 @@ An intelligent RAG-powered (Retrieval-Augmented Generation) search and chatbot s
 - Dynamic company information display
 - Responsive Material Design
 
+![User Interface](images/img2.png)
+![User Interface](images/img1.png)
+*YC Scout's intuitive interface showing company search and chat capabilities*
+
 ## 🔧 Technical Stack
 
 ### 🧠 AI/ML Stack
@@ -53,10 +62,61 @@ An intelligent RAG-powered (Retrieval-Augmented Generation) search and chatbot s
 - Axios
 - Modern JavaScript
 
-[Rest of the README remains the same until Directory Structure]
+## 🚀 Setup Guide
+
+### Prerequisites
+- Docker and Docker Compose
+- Node.js 18+ and npm
+- Python 3.12.6
+- Groq API key
+- Elasticsearch 8.x
+
+### Backend Setup
+```bash
+cd backend
+
+# Create and activate virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure environment variables
+cp .env.example .env
+# Edit .env with your credentials
+```
+
+### Frontend Setup
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Configure environment variables
+cp .env.example .env
+# Edit .env with your API endpoints
+```
+
+### Running the Application
+1. Start the backend:
+```bash
+cd backend
+uvicorn main:app --reload --port 8000
+```
+
+2. Start the frontend:
+```bash
+cd frontend
+npm run dev
+```
+
+3. Access the application:
+- Frontend: http://localhost:5173
+- API Documentation: http://localhost:8000/docs
 
 ## 📁 Directory Structure
-
 ```
 project/
 ├── 🔹 backend/
@@ -86,8 +146,6 @@ project/
 └── README.md
 ```
 
-[Rest of the README remains the same until Additional Notes]
-
 ## 📝 Additional Notes
 
 ### 🚀 Performance Features
@@ -111,10 +169,7 @@ project/
 - Cache optimization
 - Load balancing ready
 
-[Rest of the README remains the same]
-
 ## 🌟 Why YC Scout?
-
 - **Advanced RAG Architecture**: Combines the power of retrieval and generation for accurate responses
 - **State-of-the-Art LLM**: Leverages Llama-3.3-70B for human-like interactions
 - **Hybrid Search**: Multiple search strategies for comprehensive results
@@ -123,11 +178,9 @@ project/
 - **Developer-Friendly**: Well-documented and easy to extend
 
 ## 🔮 Future Roadmap
-
 - Integration with additional LLM providers
 - Enhanced vector search capabilities
 - Advanced analytics dashboard
 - Real-time company updates
 - API rate limiting and monitoring
 - Mobile application development
-
