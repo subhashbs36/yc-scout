@@ -131,4 +131,3 @@ project/
 - API rate limiting and monitoring
 - Mobile application development
 
-[Previous License section remains the same]
