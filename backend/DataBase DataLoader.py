@@ -1,83 +1,58 @@
 import os
 import json
-import faiss
-import numpy as np
-import torch
+import argparse
 from elasticsearch import Elasticsearch, helpers
-from transformers import AutoTokenizer, AutoModel
 
-# Set environment variable to avoid duplicate library errors
-os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
-# **Load Data from JSON**
-def load_data(file_path):
-    with open(file_path, "r") as file:
-        data = json.load(file)
+# **Constants**
+DEST_FILE = "company_data.json"
+ES_INDEX_NAME = "y_combinator_companies"
+ES_HOST = "http://localhost:9200"
+
+
+# **Step 1: Convert .jl File to JSON**
+def convert_jl_to_json(source, destination):
+    """Reads a .jl file and converts it into a structured JSON file."""
+    with open(source, "r", encoding="utf-8") as f:  # ✅ Specify encoding
+        data = [json.loads(line) for line in f]
+
+    with open(destination, "w", encoding="utf-8") as f:  # ✅ Write with UTF-8
+        json.dump(data, f, indent=4)
+
+    print(f"✅ Data converted from {source} to {destination}")
     return data
 
-# **Prepare Data (Text + Metadata)**
+# **Step 2: Prepare Data for Elasticsearch**
 def prepare_data(data):
-    texts, metadatas = [], {}
-    for i, item in enumerate(data):
-        text = item.get("text", "No description available")
-        metadata = item.get("metadata", {})
+    """Extracts text and metadata from JSON data for indexing in Elasticsearch."""
+    documents = []
 
-        texts.append(text)
-        metadatas[str(i)] = {  # Store metadata using index as key
-            'company_name': metadata.get('company_name', ''),
-            'description': metadata.get('description', []),
-            'tags': ', '.join(metadata.get('tags', [])),
-            'location': metadata.get('location', ''),
-            'country': metadata.get('country', ''),
-            'year_founded': metadata.get('year_founded', 0),
-            'num_founders': metadata.get('num_founders', 0),
-            'founders_names': ', '.join(metadata.get('founders_names', [])),
-            'team_size': metadata.get('team_size', 0),
-            'website': metadata.get('website', ''),
-            'linkedin_url': metadata.get('linkedin_url', ''),
-            'status': metadata.get('status', '')
+    for obj in data:
+        text_data = f"{obj['company_name']} {obj['short_description']} {obj['long_description']}"
+        metadata = {
+            "company_name": obj["company_name"],
+            "description": obj["batch"],
+            "status": obj["status"],
+            "tags": obj["tags"],
+            "location": obj["location"],
+            "country": obj["country"],
+            "year_founded": obj["year_founded"],
+            "num_founders": obj["num_founders"],
+            "founders_names": obj["founders_names"],
+            "team_size": obj["team_size"],
+            "website": obj["website"],
+            "cb_url": obj["cb_url"],
+            "linkedin_url": obj["linkedin_url"],
+            'ycombinator': obj["company_url"]
         }
-    return texts, metadatas
+        documents.append({"text": text_data, "metadata": metadata})
 
-# **Generate Text Embeddings using BERT**
-def encode_texts(texts, tokenizer, model, batch_size=32, device="cpu"):
-    embeddings = []
-    model.to(device)
-    for i in range(0, len(texts), batch_size):
-        batch = texts[i:i+batch_size]
-        encoded_inputs = tokenizer(
-            batch,
-            padding=True,
-            truncation=True,
-            return_tensors="pt",
-            max_length=512
-        ).to(device)
-        with torch.no_grad():
-            outputs = model(**encoded_inputs)
-        batch_embeddings = outputs.last_hidden_state[:, 0, :].cpu().numpy()
-        embeddings.append(batch_embeddings)
-    return np.vstack(embeddings)
+    return documents
 
-# **Save FAISS Index**
-def save_faiss_index(index, file_path):
-    faiss.write_index(index, file_path)
 
-# **Load FAISS Index**
-def load_faiss_index(file_path):
-    return faiss.read_index(file_path)
-
-# **Save Metadata Separately**
-def save_metadata(metadata, file_path):
-    with open(file_path, "w") as file:
-        json.dump(metadata, file)
-
-# **Load Metadata**
-def load_metadata(file_path):
-    with open(file_path, "r") as file:
-        return json.load(file)
-
-# **Create Elasticsearch Index with Proper Mapping**
+# **Step 3: Create Elasticsearch Index**
 def create_es_index(es, index_name):
+    """Creates an Elasticsearch index with proper mapping if it does not already exist."""
     mapping = {
         "mappings": {
             "properties": {
@@ -95,94 +70,68 @@ def create_es_index(es, index_name):
                         "team_size": {"type": "integer"},
                         "website": {"type": "keyword"},
                         "linkedin_url": {"type": "keyword"},
-                        "status": {"type": "text"}
+                        "status": {"type": "text"},
+                        "ycombinator": {"type": "keyword"}
                     }
-                }
+                },
             }
         }
     }
+
     if not es.indices.exists(index=index_name):
         es.indices.create(index=index_name, body=mapping)
-        print(f"Index '{index_name}' created successfully.")
+        print(f"✅ Index '{index_name}' created successfully.")
     else:
-        print(f"Index '{index_name}' already exists.")
+        print(f"⚠️ Index '{index_name}' already exists.")
 
-# **Index Documents in Elasticsearch**
+
+# **Step 4: Index Documents in Elasticsearch**
 def index_documents_in_es(es, index_name, documents):
+    """Indexes a list of documents into Elasticsearch."""
     actions = [
         {
             "_index": index_name,
             "_id": doc_id,
-            "_source": doc
+            "_source": doc,
         }
         for doc_id, doc in enumerate(documents)
     ]
+
     helpers.bulk(es, actions)
-    print(f"Indexed {len(documents)} documents in Elasticsearch.")
+    print(f"✅ Indexed {len(documents)} documents in Elasticsearch.")
+
 
 # **Main Execution**
 if __name__ == "__main__":
-    print("Step 1: Loading and preprocessing data")
-    file_path = "data/company_data_cleaned_final.json"
-    data = load_data(file_path)
-    print(f"Loaded {len(data)} records from {file_path}.")
+    os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"  # Prevent duplicate library errors
 
-    texts, metadatas = prepare_data(data)
-    print(f"Prepared {len(texts)} texts with metadata.")
+    # **Argument Parser for Command-Line Input**
+    parser = argparse.ArgumentParser(description="Process a .jl file and index it in Elasticsearch.")
+    parser.add_argument("source_file", type=str, nargs="?", default="output.jl",
+                        help="Path to the .jl file (default: output.jl)")
 
-    # print("\nStep 2: Loading BERT tokenizer and model")
-    # model_name = "bert-base-uncased"
-    # tokenizer = AutoTokenizer.from_pretrained(model_name)
-    # model = AutoModel.from_pretrained(model_name)
-    # print("BERT tokenizer and model loaded.")
+    args = parser.parse_args()
+    SOURCE_FILE = args.source_file
 
-    # print("\nStep 3: Generating embeddings")
-    # device = "cuda" if torch.cuda.is_available() else "cpu"
-    # print(f"Using device: {device}")
-    # embeddings = encode_texts(texts, tokenizer, model, device=device)
-    # embeddings = embeddings.astype(np.float32)
-    # print(f"Generated embeddings shape: {embeddings.shape}")
+    print("\n📌 Step 1: Converting .jl to JSON")
+    data = convert_jl_to_json(SOURCE_FILE, DEST_FILE)
 
-    # print("\nStep 4: Initializing and populating FAISS index")
-    # dimension = embeddings.shape[1]
-    # index = faiss.IndexFlatL2(dimension)
-    # index.add(embeddings)
-    # print(f"Number of vectors in the index: {index.ntotal}")
+    print("\n📌 Step 2: Preparing data for Elasticsearch")
+    documents = prepare_data(data)
+    print(f"✅ Prepared {len(documents)} records for indexing.")
 
-    # print("\nStep 5: Saving FAISS index and metadata")
-    # save_faiss_index(index, "faiss_index.bin")
-    # save_metadata(metadatas, "metadata.json")
-    # print("FAISS index and metadata saved.")
+    print("\n📌 Step 3: Connecting to Elasticsearch")
+    es = Elasticsearch(ES_HOST)
 
-    print("\nStep 6: Connecting to Elasticsearch")
-    es = Elasticsearch("http://localhost:9200")  # Ensure ES is running locally
-    index_name = "y_combinator_companies"
 
     if es.ping():
-        print("Connected to Elasticsearch.")
-        
-        print("\nStep 7: Creating Elasticsearch index")
-        create_es_index(es, index_name)
+        print("✅ Connected to Elasticsearch.")
 
-        print("\nStep 8: Indexing documents in Elasticsearch")
-        es_documents = [{"text": texts[i], "metadata": metadatas[str(i)]} for i in range(len(texts))]
-        index_documents_in_es(es, index_name, es_documents)
+        print("\n📌 Step 4: Creating Elasticsearch Index")
+        create_es_index(es, ES_INDEX_NAME)
+
+        print("\n📌 Step 5: Indexing Data in Elasticsearch")
+        index_documents_in_es(es, ES_INDEX_NAME, documents)
+
     else:
-        print("Could not connect to Elasticsearch. Ensure it is running.")
-
-    # print("\nStep 9: Processing query")
-    # query = ["Automate your workflows with AI."]
-    # print(f"Original query: {query}")
-    # query_embeddings = encode_texts(query, tokenizer, model, device=device)
-    # query_embeddings = query_embeddings.astype(np.float32)
-
-    # print("\nStep 10: Searching FAISS index")
-    # k = 5  # Number of nearest neighbors
-    # distances, indices = index.search(query_embeddings, k)
-
-    # print("\nTop matches from FAISS:")
-    # for i, idx in enumerate(indices[0]):
-    #     idx_str = str(idx)
-    #     metadata = metadatas.get(idx_str, {})
-    #     print(f"Match {i + 1}: {texts[idx]} (Distance: {distances[0][i]})")
-    #     print(f"Metadata: {json.dumps(metadata, indent=2)}\n")
+        print("❌ Could not connect to Elasticsearch. Ensure it is running.")

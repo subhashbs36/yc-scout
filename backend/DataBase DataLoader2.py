@@ -4,7 +4,7 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 import os
 
-DATA_FILE = "data/company_data_cleaned_final.json"
+DATA_FILE = "company_data_cleaned_final.json"
 FAISS_INDEX_FILE = "faiss_index.bin"
 FAISS_DATA_FILE = "faiss_data.json"
 
@@ -30,7 +30,8 @@ def preprocess_data(item):
         " ".join(map(str, meta.get("founders_names", []))),  
         str(meta.get("team_size", "")),  
         str(meta.get("website", "")),  
-        str(meta.get("linkedin_url", ""))  
+        str(meta.get("linkedin_url", "")),
+        str(meta.get("ycombinator", ""))  
     ])
     return combined_text.strip().lower()
 
@@ -53,8 +54,8 @@ def build_faiss_index(data):
     with open(FAISS_DATA_FILE, "w", encoding="utf-8") as file:
         json.dump(full_json_data, file, ensure_ascii=False, indent=4)
 
-
     print("✅ FAISS index and data saved successfully!")
+
 
 # ✅ Load FAISS Index and Data
 def load_faiss_index():

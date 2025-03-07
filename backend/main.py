@@ -196,7 +196,7 @@ def generate_prompt(context, user_query, rag_results):
                 Replace `<field_name>` with the appropriate field based on the user query.
                 """
             }]
-    else:
+    else:       
         return [{
             "role": "user",
             "content": f"""
@@ -299,7 +299,8 @@ def retrival_phase2(context: str, user_query: str):
         
     if not faiss_results:
         return {"error": "No relevant Faiss data found."}
-
+    
+    print(faiss_results)
     prompt = generate_prompt(context, user_query, faiss_results)
     output = groq_call(prompt=prompt, model=groq_model)
 
@@ -310,7 +311,7 @@ def retrival_phase2(context: str, user_query: str):
 @app.get("/company_data")
 def retrieve_company_data():
     try:
-        company_data_path = "data/company_data_cleaned_final.json"
+        company_data_path = "company_data.json"
         if os.path.exists(company_data_path):
             company_data = json.load(open(company_data_path))
             return company_data
