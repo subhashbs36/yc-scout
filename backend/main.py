@@ -48,11 +48,25 @@ app = FastAPI()
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:9200"],  
+    allow_origins=["http://localhost:5173", "http://localhost:9200", "*"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ✅ Load FAISS Index and Data
+def load_faiss_index():
+    if not os.path.exists(FAISS_INDEX_FILE) or not os.path.exists(FAISS_DATA_FILE):
+        print("⚠️ FAISS index or data not found. Rebuilding index...")
+        data = load_data(DATA_FILE)
+        # build_faiss_index(data)
+    
+    index = faiss.read_index(FAISS_INDEX_FILE)
+    with open(FAISS_DATA_FILE, "r", encoding="utf-8") as file:
+        faiss_data_store = json.load(file)
+
+    print("✅ FAISS index and data loaded successfully!")
+    return index, faiss_data_store
 
 # ✅ Hybrid Search: FAISS + Exact Match Boosting
 def search_faiss(query, index, faiss_data_store, top_k=5):
@@ -65,9 +79,14 @@ def search_faiss(query, index, faiss_data_store, top_k=5):
     distances, indices = index.search(query_embedding, top_k)
 
     results = []
-    for idx in indices[0]:
-        if idx != -1:
-            results.append(faiss_data_store[str(idx)])  
+    for dist, idx in zip(distances[0], indices[0]):
+        if idx != -1:  # Ensuring valid indices
+            result = {
+                "index": int(idx),
+                "score": float(dist)*10,
+                "data": faiss_data_store.get(str(idx), {})  # Fetch from JSON
+            }
+            results.append(result)
 
     # ✅ Boost Exact Matches
     for item in faiss_data_store.values():
@@ -87,19 +106,6 @@ def load_data(file_path):
     with open(file_path, "r") as file:
         return json.load(file)
 
-# ✅ Load FAISS Index and Data
-def load_faiss_index():
-    if not os.path.exists(FAISS_INDEX_FILE) or not os.path.exists(FAISS_DATA_FILE):
-        print("⚠️ FAISS index or data not found. Rebuilding index...")
-        data = load_data(DATA_FILE)
-        # build_faiss_index(data)
-    
-    index = faiss.read_index(FAISS_INDEX_FILE)
-    with open(FAISS_DATA_FILE, "r", encoding="utf-8") as file:
-        faiss_data_store = json.load(file)
-
-    print("✅ FAISS index and data loaded successfully!")
-    return index, faiss_data_store
 
 index, faiss_data_store = load_faiss_index()
 
@@ -143,7 +149,12 @@ def search_documents(index_name, query, size=10):
             print(f"ID: {hit['_id']} | Score: {hit['_score']}")
             val = hit['_source']
             print(f"Source: {val}\n")
-            data.append(val)
+            result = {
+                "index": int(hit['_id']),
+                "score": float(hit['_score']),
+                "data": val
+            }
+            data.append(result)
 
         return data  # Return actual document field
     else:
@@ -182,6 +193,7 @@ def generate_prompt(context, user_query, rag_results):
                 - website (String)
                 - cb_url (String)
                 - linkedin_url (String)
+                - ycombinator (String)
 
                 **Output the Elasticsearch query strictly in the following JSON format without explanations or additional text:**
                 ```json
@@ -201,7 +213,7 @@ def generate_prompt(context, user_query, rag_results):
             "role": "user",
             "content": f"""
             You are QuackBot, a specialized chatbot for {context}. 
-            Using only the information provided in the reference document: "{rag_results[0].get("text")}" with metadata: {rag_results[0].get("metadata")}, answer exactly the following query: "{user_query}".
+            Using only the information provided in the reference document: "{rag_results[0].get("data")}" with metadata: {rag_results[0].get("metadata")}, answer exactly the following query: "{user_query}".
             please provide a precise answer strictly based on this information if query is irrelavent reply with saying Out of Bound Question please ask related to {context}.
             """
         }]
@@ -236,8 +248,8 @@ def home():
     return {"message": "Welcome to the Quak bot"}
 
 # **Phase 1: Elasticsearch-based Retrieval**
-@app.get("/response/phase1/{context}/{user_query}")
-def retrival_phase1(context: str, user_query: str):
+@app.get("/response/phase1/{context}/{user_query}/{k_results}")
+def retrival_phase1(context: str, user_query: str, k_results: int):
     start = time.time()
     index_name = "y_combinator_companies"
     
@@ -255,28 +267,36 @@ def retrival_phase1(context: str, user_query: str):
         else:
             query_attribute = groq_response.get("query", groq_response)
 
-        rag_results = search_documents(index_name, query_attribute)
+        rag_results = search_documents(index_name, query_attribute, size=k_results)
         print("Retrieved rag_results from Elasticsearch:", rag_results)
     else:
-        rag_results = search_documents(index_name, context)
+        rag_results = search_documents(index_name, context, size=k_results)
         print("Retrieved rag_results for non-general context:", rag_results)
 
     if not rag_results:
         return {"error": "No relevant Elasticsearch data found."}
 
+    rag_data = []
+    for result in rag_results:
+        text = result.get("data", "").get("text", "")
+        ycombinator = result.get("data", "").get("metadata", "").get("ycombinator", "")
+        rag_index = result.get("index", "")
+        score = result.get("score", "")
+        rag_data.append({"text": text, "ycombinator": ycombinator, "index": rag_index, "score": score})
+    print(rag_data)
     print("Generating prompt for Groq call with rag_results...")
     prompt = generate_prompt(context, user_query, rag_results)
     print("Generated prompt:", prompt)
     output = groq_call(prompt=prompt, model=groq_model)
     print("Final output from groq_call:", output)
-
+    # output["index_data"] = rag_data
     print(f"Time taken: {time.time() - start}")
-    return output
+    return [output, rag_data]
 
 
 # **Phase 2: FAISS-based Retrieval**
-@app.get("/response/phase2/{context}/{user_query}")
-def retrival_phase2(context: str, user_query: str):
+@app.get("/response/phase2/{context}/{user_query}/{k_results}")
+def retrival_phase2(context: str, user_query: str, k_results: int):
     start = time.time()
     input_text = f"{context} {user_query}"
 
@@ -293,19 +313,31 @@ def retrival_phase2(context: str, user_query: str):
         else:
             query_attribute = groq_response.get("query", groq_response)    
     
-        faiss_results = search_faiss(query_attribute, index=index, faiss_data_store=faiss_data_store, top_k=5)
+        faiss_results = search_faiss(query_attribute, index=index, faiss_data_store=faiss_data_store, top_k=k_results)
     else:
-        faiss_results = search_faiss(context, index=index, faiss_data_store=faiss_data_store, top_k=5)
+        faiss_results = search_faiss(context, index=index, faiss_data_store=faiss_data_store, top_k=k_results)
         
     if not faiss_results:
         return {"error": "No relevant Faiss data found."}
     
-    print(faiss_results)
+    # Extract "text" and "ycombinator" from FAISS results    
+    faiss_data = []
+    for result in faiss_results:
+        text = result.get("data", "").get("text", "")
+        ycombinator = result.get("data", "").get("metadata", "").get("ycombinator", "")
+        faiss_index = result.get("index", "")
+        score = result.get("score", "")
+        faiss_data.append({"text": text, "ycombinator": ycombinator, "index": faiss_index, "score": score})
+    
+    print(faiss_data)
+
     prompt = generate_prompt(context, user_query, faiss_results)
     output = groq_call(prompt=prompt, model=groq_model)
-
+    print("Final output from groq_call:", output)
+    # output["index_data"] = faiss_data
+    print(output)
     print(f"Time taken: {time.time() - start}")
-    return output
+    return [output, faiss_data]
 
 # **Retrieve Company Data**
 @app.get("/company_data")

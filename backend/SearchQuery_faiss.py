@@ -17,14 +17,27 @@ def load_faiss_index():
         faiss_data_store = json.load(file)
     return index, faiss_data_store
 
-# ✅ FAISS Search Function
+# ✅ FAISS Search Function with Scores and Indices
 def search_faiss(query, index, faiss_data_store, top_k=10):
     query_embedding = model.encode([query], convert_to_numpy=True)
     distances, indices = index.search(query_embedding, top_k)
 
-    results = [faiss_data_store[str(idx)] for idx in indices[0] if idx != -1]
+    print(f"dists: {distances}")
+    print(f"indices: {indices}")
+
+    results = []
+    for dist, idx in zip(distances[0], indices[0]):
+        if idx != -1:  # Ensuring valid indices
+            result = {
+                "index": int(idx),
+                "score": float(dist),
+                "data": faiss_data_store.get(str(idx), {})  # Fetch from JSON
+            }
+            results.append(result)
+
     print(len(results))
     return results
+
 
 # ✅ Main Execution
 if __name__ == "__main__":
@@ -32,5 +45,6 @@ if __name__ == "__main__":
 
     query = input("\nEnter your search query: ")
     results = search_faiss(query, index, faiss_data_store)
-
-    print(json.dumps(results, indent=4, ensure_ascii=False))
+    for result in results:
+        print(json.dumps(result.get("data").get("metadata", "").get("ycombinator", ""), indent=4, ensure_ascii=False))
+    # print(json.dumps(results, indent=4, ensure_ascii=False))

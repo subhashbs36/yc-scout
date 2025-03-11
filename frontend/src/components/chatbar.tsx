@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import tenorGif from "../assets/tenor.gif"; // Adjust path accordingly
 import axios from "axios";
- // Adjust path accordingly
 
 interface ChatbarProps {
     company?: string | null;
@@ -18,6 +18,7 @@ const Chatbar: React.FC<ChatbarProps> = ({ company }) => {
     const [input, setInput] = useState<string>("");
     const chatContainerRef = useRef<HTMLDivElement>(null);
     const [phase , setPhase] = useState<string>('phase1');
+    const navigate = useNavigate();
 
     useEffect(() => {   
         if (company) {
@@ -46,18 +47,17 @@ const Chatbar: React.FC<ChatbarProps> = ({ company }) => {
         }
     };
 
-    const getresponse = async (currentSession:string , userMessage:string) => {   
+    const getresponse = async (currentSession:string, userMessage:string) => {   
         console.log(userMessage)
         try {
             console.log(`http://127.0.0.1:8000/`)
             const response = await axios.get(`http://127.0.0.1:8000/response/${phase}/${currentSession}/${userMessage}`)
-            console.log(response['data'])
-            return response['data']
-        }catch(error){
-            return (`Error Fetching chat : ${error}`)
+            console.log(response)
+            return response
+        } catch(error) {
+            console.error("API error:", error)
+            return error // Return the actual error object instead of a string
         }
-
-
     }
 
     const handleSendMessage = () => {
@@ -71,14 +71,31 @@ const Chatbar: React.FC<ChatbarProps> = ({ company }) => {
         // actual bot response 
         const bot_response = getresponse(currentSession, input);
         bot_response.then(response => {
-            const botMessage: Message = {
-                sender: "bot",
-                text: `${response}`,
-            };
-            setMessages((prev) => [...prev, botMessage]);
+            if (response && response.data) {
+                const botMessage: Message = {
+                    sender: "bot",
+                    text: response.data,
+                    raw_json: JSON.stringify(response),
+                };
+                setMessages((prev) => [...prev, botMessage]);
+            } else {
+                const botMessage: Message = {
+                    sender: "bot",
+                    text: "Error Fetching chat",
+                    raw_json: JSON.stringify(response),
+                };
+                setMessages((prev) => [...prev, botMessage]);
+            }
         });
     };
 
+    const handleViewRawJson = (rawJson: string) => {
+        // Store the JSON in localStorage to access it from the new tab
+        localStorage.setItem('rawJsonData', rawJson);
+        
+        // Open the view-json route in a new tab
+        window.open('/view-json', '_blank');
+    };
 
     useEffect(() => {
         const firstMessage = `Quack! how can i help u with  ${currentSession}.`;
@@ -102,10 +119,10 @@ const Chatbar: React.FC<ChatbarProps> = ({ company }) => {
                     <div className="flex gap-4 border-black">
                         <button 
                         className={`p-2 text-xl font-bold ${phase === 'phase1' ? '  text-black  bg-inherit border-2 rounded-2xl' : ''} `} 
-                        onClick = {() => setPhase('phase1')}>Phase 1</button>
+                        onClick = {() => setPhase('phase1')}>PyElastic</button>
                         <button 
                         className={`p-2 text-xl font-bold ${phase === 'phase2' ? '  text-black bg-inherit border-2 rounded-2xl' : ''} `} 
-                        onClick = {() => setPhase('phase2')}>Phase 2</button>
+                        onClick = {() => setPhase('phase2')}>BERT </button>
                     </div>
 
                     <button
@@ -126,6 +143,15 @@ const Chatbar: React.FC<ChatbarProps> = ({ company }) => {
                             key={index}
                             className={`p-2 rounded-lg w-fit max-w-[70%] transition-all duration-500 ${msg.sender === "user"? "bg-gradient-to-r from-cyan-500 to-blue-500 text-black ml-auto": "bg-gradient-to-r from-cyan-500 to-blue-500 text-black"}`}>
                             {msg.text}
+                            <br />
+                            {msg.raw_json && (
+                                <button 
+                                    onClick={() => handleViewRawJson(msg.raw_json)}
+                                    className="text-yellow-800 underline ml-2"
+                                >
+                                    View Raw JSON
+                                </button>
+                            )}
                         </div>
                     ))}
                 </div>
