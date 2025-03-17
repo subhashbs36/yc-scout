@@ -1,6 +1,7 @@
 import faiss
 import json
 import numpy as np
+np.float_ = np.float64
 from sentence_transformers import SentenceTransformer
 
 # Load the pre-trained model

@@ -4,6 +4,7 @@ import json
 import faiss
 import torch
 import numpy as np
+np.float_ = np.float64
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

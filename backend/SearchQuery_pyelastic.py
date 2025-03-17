@@ -1,3 +1,5 @@
+import numpy as np
+np.float_ = np.float64
 from elasticsearch import Elasticsearch
 
 # Connect to Elasticsearch

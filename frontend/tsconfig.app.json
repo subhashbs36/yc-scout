@@ -13,14 +13,18 @@
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
-    "jsx": "react-jsx",
+    "jsx": "react-jsx",  // JSX transform pass
+    "jsxImportSource": "react", // Adjust if you use a different library
 
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+    
+    /* Allow JSX/JS files */
+    "allowJs": true
   },
-  "include": ["src"]
+  "include": ["src", "**/*.jsx"]
 }

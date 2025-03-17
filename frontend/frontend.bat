@@ -1,0 +1,3 @@
+:: Run npm install
+echo Running npm install...
+npm run dev

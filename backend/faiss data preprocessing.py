@@ -1,3 +1,5 @@
+import numpy as np
+np.float_ = np.float64
 import json
 document_path = 'company_data.json' 
 data = json.load(open(document_path))

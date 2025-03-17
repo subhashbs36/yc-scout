@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Navbar from "./components/navbar";
+import React, { useState , useEffect } from "react";
 import CompanyItem from "./components/CompanyItem";
 import Chatbar from "./components/chatbar";
 import anya2 from "./assets/anya2.png";
 import fullface from "./assets/full_face.png";
 import company from './assets/companies.json';
-import RawJsonModal from "./components/RawJsonModal"; // Import the new modal component
-import ViewJsonPage from "./pages/ViewJsonPage"; // Import the new page component
+import IndexData from "./components/index_data";
 
 interface Company {
   company_id: number | null;
@@ -37,6 +35,8 @@ const App: React.FC = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const companiesPerPage = 20; // Adjust as needed
+
+  const [results, setResults] = useState<any[]>([]); // State for index data
 
   const tags = ['3d-printed-foods',
     '3d-printing',
@@ -126,124 +126,122 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={
-          <div className="flex flex-row">
-            <div className="border-2 border-r-1 w-full h-full relative">
-              <div id="navbar" className="sticky top-0 z-50 bg-white">
-                <Navbar className="sticky top-0" handleSelectedMeem={handleSelectedMeem} />
-                <hr className="ml-8 mr-8" />
-              </div>
+    <>
+      <div className="flex flex-row">
+        <div className="border-2 border-r-1 w-1/2 h-full relative">
+          <div id="navbar" className="sticky top-0 z-50 bg-white">
+            <Navbar className="sticky top-0" handleSelectedMeem={handleSelectedMeem} />
+            <hr className="ml-8 mr-8" />
+          </div>
 
-              <div className="absolute inset-0 z-0 mt-10  h-1/3 w-full items-center pointer-events-none"> 
-                <img src={currentmeme} alt="anya2" className="w-fit h-fit opacity-30" />
-              </div>
+          <div className="absolute inset-0 z-0 mt-10  h-1/3 w-full items-center pointer-events-none"> 
+            <img src={currentmeme} alt="anya2" className="w-fit h-fit opacity-30" />
+          </div>
 
-              <div id="companySection" className="text-7xl ml-90 text-center mt-10 font-normal tracking-wide">
-                OUR <br /> COMPANIES
-              </div>
+          <div id="companySection" className="text-4xl ml-70 text-center mt-5 font-normal tracking-wide">
+            OUR <br /> COMPANIES
+          </div>
 
-              <div>
-                <div className="p-4 m-6  text-l justify-between items-center">
-                  {/* Search Bar */}
-                  <input
-                    type="text"
-                    placeholder="Search Company"
-                    className="w-full p-3 font-bold text-xl m-2 focus:outline-none bg-gradient-to-r from-slate-100 to-slate-200 boder-2" 
-                    onChange={handleSearchChange}
-                  />
+          <div>
+            <div className="p-4 m-6  text-l justify-between items-center">
+              {/* Search Bar */}
+                <input
+                type="text"
+                placeholder="Search Company"
+                className="w-full p-3 font-bold text-xl m-2 focus:outline-none bg-gradient-to-r bg-gradient-to-r from-gray-300 to-gray-500 text-black text-black placeholder:text-right"
+                onChange={handleSearchChange}
+                />
 
-                  {/* Status Filter */}
-                  <select className="m-1 p-1 text-sm font-bold border-1 ml-0 rounded" onChange={handleStatusChange}>
-                    <option value="">All Statuses</option>
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                  </select>
+              {/* Status Filter */}
+                <select className="m-1 p-1 text-sm font-bold border-1 ml-0 rounded" onChange={handleStatusChange}>
+                <option value="">All Statuses</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+                </select>
 
-                  {/* Location Filter */}
-                  <select className="m-1 p-1 text-sm font-bold border-1 ml-0 rounded tracking-wide" onChange={handleLocationChange}>
-                    <option value="">All Locations</option>
-                    <option value="Seattle, WA">Seattle, WA</option>
-                    <option value="San Francisco">San Francisco</option>
-                    <option value="Toronto, Canada">Toronto, Canada</option>
-                    <option value="Huntington Beach, CA">Huntington Beach, CA</option>
-                    <option value="New York">New York</option>
-                    <option value="Amsterdam, Netherlands">Amsterdam, Netherlands</option>
-                    <option value="Dublin, Ireland">Dublin, Ireland</option>
-                    <option value="London, United Kingdom">London, United Kingdom</option>
-                    <option value="Austin, TX">Austin, TX</option>
-                    <option value="Oakland, CA">Oakland, CA</option>
-                    <option value="Berlin, Germany">Berlin, Germany</option>
-                    <option value="Paris, France">Paris, France</option>
-                    <option value="Redmond, WA">Redmond, WA</option>
-                    <option value="Gurugram, India">Gurugram, India</option>
-                    <option value="Los Angeles, CA">Los Angeles, CA</option>
-                    <option value="Washington, DC">Washington, DC</option>
-                    <option value="Atlanta, GA">Atlanta, GA</option>
-                    <option value="Mexico City, Mexico">Mexico City, Mexico</option>
-                    <option value="Copenhagen, Denmark">Copenhagen, Denmark</option>
-                    <option value="Miami, FL">Miami, FL</option>
-                    <option value="Santa Barbara, CA">Santa Barbara, CA</option>
-                    <option value="Ikeja, Nigeria">Ikeja, Nigeria</option>
-                    <option value="Vienna, Austria">Vienna, Austria</option>
-                    <option value="Lake Oswego, OR">Lake Oswego, OR</option>
-                    <option value="Long Beach, CA">Long Beach, CA</option>
-                    <option value="Nairobi, Kenya">Nairobi, Kenya</option>
-                    <option value="Lagos, Nigeria">Lagos, Nigeria</option>
-                    <option value="Oxford, United Kingdom">Oxford, United Kingdom</option>
-                    <option value="Zug, Switzerland">Zug, Switzerland</option>
-                    <option value="Santa Clara, CA">Santa Clara, CA</option>
-                    <option value="Philadelphia, PA">Philadelphia, PA</option>
-                    <option value="San Jose, CA">San Jose, CA</option>
-                    <option value="Boston">Boston</option>
-                    <option value="Bengaluru, India">Bengaluru, India</option>
-                    <option value="Jakarta, Indonesia">Jakarta, Indonesia</option>
-                    <option value="Bogotá, Colombia">Bogotá, Colombia</option>
-                    <option value="Singapore, Singapore">Singapore, Singapore</option>
-                    <option value="São Paulo, Brazil">São Paulo, Brazil</option>
-                    <option value="Buenos Aires, Argentina">Buenos Aires, Argentina</option>
-                    <option value="Madrid, Spain">Madrid, Spain</option>
-                    <option value="Mexico City, Mexico">Mexico City, Mexico</option>
-                    <option value="Berlin, Germany">Berlin, Germany</option>
-                    <option value="Paris, France">Paris, France</option>
-                    <option value="New York">New York</option>
-                    <option value="San Francisco">San Francisco</option>
-                    <option value="Toronto, Canada">Toronto, Canada</option>
-                    <option value="London, United Kingdom">London, United Kingdom</option>
-                    <option value="Austin, TX">Austin, TX</option>
-                    <option value="Los Angeles, CA">Los Angeles, CA</option>
-                    <option value="Washington, DC">Washington, DC</option>
-                    <option value="Atlanta, GA">Atlanta, GA</option>
-                    <option value="Mexico City, Mexico">Mexico City, Mexico</option>
-                    <option value="Copenhagen, Denmark">Copenhagen, Denmark</option>
-                    <option value="Miami, FL">Miami, FL</option>
-                    <option value="Santa Barbara, CA">Santa Barbara, CA</option>
-                    <option value="Ikeja, Nigeria">Ikeja, Nigeria</option>
-                    <option value="Vienna, Austria">Vienna, Austria</option>
-                    <option value="Lake Oswego, OR">Lake Oswego, OR</option>
-                    <option value="Long Beach, CA">Long Beach, CA</option>
-                    <option value="Nairobi, Kenya">Nairobi, Kenya</option>
-                    <option value="Lagos, Nigeria">Lagos, Nigeria</option>
-                    <option value="Oxford, United Kingdom">Oxford, United Kingdom</option>
-                    <option value="Zug, Switzerland">Zug, Switzerland</option>
-                    <option value="Santa Clara, CA">Santa Clara, CA</option>
-                    <option value="Philadelphia, PA">Philadelphia, PA</option>
-                    <option value="San Jose, CA">San Jose, CA</option>
-                    <option value="Boston">Boston</option>
-                    <option value="Bengaluru, India">Bengaluru, India</option>
-                    <option value="Jakarta, Indonesia">Jakarta, Indonesia</option>
-                    <option value="Bogotá, Colombia">Bogotá, Colombia</option>
-                    <option value="Singapore, Singapore">Singapore, Singapore</option>
-                    <option value="São Paulo, Brazil">São Paulo, Brazil</option>
-                    <option value="Buenos Aires, Argentina">Buenos Aires, Argentina</option>
-                    <option value="Madrid, Spain">Madrid, Spain</option>
-                    <option value="Mexico City, Mexico">Mexico City, Mexico</option>
-                    <option value="Berlin, Germany">Berlin, Germany</option>
-                    <option value="Paris, France">Paris, France</option>
-                  </select>
-                  
-                  <select className="m-1 p-1 text-sm font-bold border-1 ml-0 rounded tracking-wide" onChange={handleBatchChange}>
+                {/* Location Filter */}
+                <select className="m-1 p-1 text-sm font-bold border-1 ml-0 rounded tracking-wide" onChange={handleLocationChange}>
+                  <option value="">All Locations</option>
+                  <option value="Seattle, WA">Seattle, WA</option>
+                  <option value="San Francisco">San Francisco</option>
+                  <option value="Toronto, Canada">Toronto, Canada</option>
+                  <option value="Huntington Beach, CA">Huntington Beach, CA</option>
+                  <option value="New York">New York</option>
+                  <option value="Amsterdam, Netherlands">Amsterdam, Netherlands</option>
+                  <option value="Dublin, Ireland">Dublin, Ireland</option>
+                  <option value="London, United Kingdom">London, United Kingdom</option>
+                  <option value="Austin, TX">Austin, TX</option>
+                  <option value="Oakland, CA">Oakland, CA</option>
+                  <option value="Berlin, Germany">Berlin, Germany</option>
+                  <option value="Paris, France">Paris, France</option>
+                  <option value="Redmond, WA">Redmond, WA</option>
+                  <option value="Gurugram, India">Gurugram, India</option>
+                  <option value="Los Angeles, CA">Los Angeles, CA</option>
+                  <option value="Washington, DC">Washington, DC</option>
+                  <option value="Atlanta, GA">Atlanta, GA</option>
+                  <option value="Mexico City, Mexico">Mexico City, Mexico</option>
+                  <option value="Copenhagen, Denmark">Copenhagen, Denmark</option>
+                  <option value="Miami, FL">Miami, FL</option>
+                  <option value="Santa Barbara, CA">Santa Barbara, CA</option>
+                  <option value="Ikeja, Nigeria">Ikeja, Nigeria</option>
+                  <option value="Vienna, Austria">Vienna, Austria</option>
+                  <option value="Lake Oswego, OR">Lake Oswego, OR</option>
+                  <option value="Long Beach, CA">Long Beach, CA</option>
+                  <option value="Nairobi, Kenya">Nairobi, Kenya</option>
+                  <option value="Lagos, Nigeria">Lagos, Nigeria</option>
+                  <option value="Oxford, United Kingdom">Oxford, United Kingdom</option>
+                  <option value="Zug, Switzerland">Zug, Switzerland</option>
+                  <option value="Santa Clara, CA">Santa Clara, CA</option>
+                  <option value="Philadelphia, PA">Philadelphia, PA</option>
+                  <option value="San Jose, CA">San Jose, CA</option>
+                  <option value="Boston">Boston</option>
+                  <option value="Bengaluru, India">Bengaluru, India</option>
+                  <option value="Jakarta, Indonesia">Jakarta, Indonesia</option>
+                  <option value="Bogotá, Colombia">Bogotá, Colombia</option>
+                  <option value="Singapore, Singapore">Singapore, Singapore</option>
+                  <option value="São Paulo, Brazil">São Paulo, Brazil</option>
+                  <option value="Buenos Aires, Argentina">Buenos Aires, Argentina</option>
+                  <option value="Madrid, Spain">Madrid, Spain</option>
+                  <option value="Mexico City, Mexico">Mexico City, Mexico</option>
+                  <option value="Berlin, Germany">Berlin, Germany</option>
+                  <option value="Paris, France">Paris, France</option>
+                  <option value="New York">New York</option>
+                  <option value="San Francisco">San Francisco</option>
+                  <option value="Toronto, Canada">Toronto, Canada</option>
+                  <option value="London, United Kingdom">London, United Kingdom</option>
+                  <option value="Austin, TX">Austin, TX</option>
+                  <option value="Los Angeles, CA">Los Angeles, CA</option>
+                  <option value="Washington, DC">Washington, DC</option>
+                  <option value="Atlanta, GA">Atlanta, GA</option>
+                  <option value="Mexico City, Mexico">Mexico City, Mexico</option>
+                  <option value="Copenhagen, Denmark">Copenhagen, Denmark</option>
+                  <option value="Miami, FL">Miami, FL</option>
+                  <option value="Santa Barbara, CA">Santa Barbara, CA</option>
+                  <option value="Ikeja, Nigeria">Ikeja, Nigeria</option>
+                  <option value="Vienna, Austria">Vienna, Austria</option>
+                  <option value="Lake Oswego, OR">Lake Oswego, OR</option>
+                  <option value="Long Beach, CA">Long Beach, CA</option>
+                  <option value="Nairobi, Kenya">Nairobi, Kenya</option>
+                  <option value="Lagos, Nigeria">Lagos, Nigeria</option>
+                  <option value="Oxford, United Kingdom">Oxford, United Kingdom</option>
+                  <option value="Zug, Switzerland">Zug, Switzerland</option>
+                  <option value="Santa Clara, CA">Santa Clara, CA</option>
+                  <option value="Philadelphia, PA">Philadelphia, PA</option>
+                  <option value="San Jose, CA">San Jose, CA</option>
+                  <option value="Boston">Boston</option>
+                  <option value="Bengaluru, India">Bengaluru, India</option>
+                  <option value="Jakarta, Indonesia">Jakarta, Indonesia</option>
+                  <option value="Bogotá, Colombia">Bogotá, Colombia</option>
+                  <option value="Singapore, Singapore">Singapore, Singapore</option>
+                  <option value="São Paulo, Brazil">São Paulo, Brazil</option>
+                  <option value="Buenos Aires, Argentina">Buenos Aires, Argentina</option>
+                  <option value="Madrid, Spain">Madrid, Spain</option>
+                  <option value="Mexico City, Mexico">Mexico City, Mexico</option>
+                  <option value="Berlin, Germany">Berlin, Germany</option>
+                  <option value="Paris, France">Paris, France</option>
+                </select>
+                
+                <select className="m-1 p-1 text-sm font-bold border-1 ml-0 rounded tracking-wide" onChange={handleBatchChange}>
                     <option value="">All Batch</option>
                     <option value="F24">F24</option>
                     <option value="IK12">IK12</option>
@@ -286,106 +284,105 @@ const App: React.FC = () => {
                     <option value="W23">W23</option>
                     <option value="W24">W24</option>
                     <option value="W25">W25</option>
-                  </select>
-                  <select className="m-1 p-1 text-sm font-bold border-1 ml-0 rounded tracking-wide" onChange={handleCategoryChange}>
-                    <option value="">All Categories</option>
-                      {tags.map((tag, index) => (
-                      <option key={index} value={tag}>{tag}</option>
-                      ))}
-                  </select>
+                </select>
+                <select className="m-1 p-1 text-sm font-bold border-1 ml-0 rounded tracking-wide" onChange={handleCategoryChange}>
+                  <option value="">All Categories</option>
+                    {tags.map((tag, index) => (
+                    <option key={index} value={tag}>{tag}</option>
+                    ))}
+                </select>
 
-                    <button 
-                    onClick={() => {
-                      setSearchQuery("");
-                      setSelectedLocation(null);
-                      setSelectedStatus(null);
-                      setSelectedBatch(null);
-                      setSelectedCategory(null);
-                      
-                    }}
-                    className="m-1 p-1 text-sm font-bold border-1 ml-0 rounded tracking-wide"
-                    >
-                    Reset
-                    </button>
-                </div>
-
-
-              <ul
-                className="font-normal tracking-widest"
-                onClick={() => {
-                  const navbar = document.getElementById("navbar");
-                  if (navbar) {
-                    navbar.scrollIntoView({ behavior: "smooth", block: "start" });
-                  }
-                }}                
-              >
-                {currentCompanies.map((company, index) => (
-                  <CompanyItem
-                    key={index}
-                    company={{
-                      company_id: company.company_id,
-                      company_name: company.company_name,
-                      short_description: company.short_description,
-                      long_description: company.long_description,
-                      batch: company.batch,
-                      status: company.status,
-                      tags: company.tags,
-                      location: company.location,
-                      country: company.country,
-                      year_founded: company.year_founded,
-                      num_founders: company.num_founders,
-                      founders_names: company.founders_names,
-                      team_size: company.team_size,
-                      website: company.website,
-                      linkedin_url: company.linkedin_url,
-                      cb_url: company.cb_url,
-                      image_urls: company.image_urls,
-                    }}
-                    isOpen={openIndex === index}
-                    onToggle={() => handleToggle(index)}
-                    onClick={() => handleSelectedCompany(company.company_name)}
-                  />
-                ))}
-              </ul>
-              <div className="flex justify-center mt-5">
-                <button 
-                  disabled={currentPage === 1} 
+                  <button 
                   onClick={() => {
-                    setCurrentPage(prev => prev - 1);
-                    setOpenIndex(null);
-                    window.scrollTo({ top: 0, behavior: "smooth" });
+                    setSearchQuery("");
+                    setSelectedLocation(null);
+                    setSelectedStatus(null);
+                    setSelectedBatch(null);
+                    setSelectedCategory(null);
+                    
                   }}
-                  className="mx-2 p-2 border rounded"
-                >
-                  Previous
-                </button>
-
-                <span className="p-2">
-                  Page {currentPage} of {Math.ceil(companies.length / companiesPerPage)}
-                </span>
-
-                <button 
-                  disabled={indexOfLastCompany >= companies.length} 
-                  onClick={() => {
-                    setCurrentPage(prev => prev + 1);
-                    setOpenIndex(null);
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  className="mx-2 p-2 border rounded"
-                >
-                  Next
-                </button> 
+                  className="m-1 p-1 text-sm font-bold border-1 ml-0 rounded tracking-wide"
+                  >
+                  Reset
+                  </button>
               </div>
+
+
+            <ul
+              className="font-normal tracking-widest"
+              onClick={() => {
+                const navbar = document.getElementById("navbar");
+                if (navbar) {
+                  navbar.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+              }}                
+            >
+              {currentCompanies.map((company, index) => (
+                <CompanyItem
+                  key={index}
+                  company={{
+                    company_id: company.company_id,
+                    company_name: company.company_name,
+                    short_description: company.short_description,
+                    long_description: company.long_description,
+                    batch: company.batch,
+                    status: company.status,
+                    tags: company.tags,
+                    location: company.location,
+                    country: company.country,
+                    year_founded: company.year_founded,
+                    num_founders: company.num_founders,
+                    founders_names: company.founders_names,
+                    team_size: company.team_size,
+                    website: company.website,
+                    linkedin_url: company.linkedin_url,
+                    cb_url: company.cb_url,
+                    image_urls: company.image_urls,
+                  }}
+                  isOpen={openIndex === index}
+                  onToggle={() => handleToggle(index)}
+                  onClick={() => handleSelectedCompany(company.company_name)}
+                />
+              ))}
+            </ul>
+            <div className="flex justify-center mt-5">
+              <button 
+                disabled={currentPage === 1} 
+                onClick={() => {
+                  setCurrentPage(prev => prev - 1);
+                  setOpenIndex(null);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className="mx-2 p-2 border rounded"
+              >
+                Previous
+              </button>
+
+              <span className="p-2">
+                Page {currentPage} of {Math.ceil(companies.length / companiesPerPage)}
+              </span>
+
+              <button 
+                disabled={indexOfLastCompany >= companies.length} 
+                onClick={() => {
+                  setCurrentPage(prev => prev + 1);
+                  setOpenIndex(null);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className="mx-2 p-2 border rounded"
+              >
+                Next
+              </button> 
             </div>
           </div>
-          
-          {/* CHAT SECTION */}
-          <Chatbar company={selectedCompany} />
         </div>
-        } />
-        <Route path="/view-json" element={<ViewJsonPage />} />
-      </Routes>
-    </Router>
+        
+        {/* CHAT SECTION */}
+        <Chatbar company={selectedCompany} setResults={setResults}/>
+        {/* Index SECTION */}
+        <IndexData results={results}/>
+      </div>
+    </>
   );
 }
 
