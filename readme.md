@@ -36,6 +36,7 @@ An intelligent RAG-powered (Retrieval-Augmented Generation) search and chatbot s
 - Dynamic company information display
 - Responsive Material Design
 
+![User Interface](images/ui.png)
 ![User Interface](images/img2.png)
 ![User Interface](images/img1.png)
 *YC Scout's intuitive interface showing company search and chat capabilities*
@@ -71,6 +72,26 @@ An intelligent RAG-powered (Retrieval-Augmented Generation) search and chatbot s
 - Groq API key
 - Elasticsearch 7.10.0
 
+## Option 1: Quick Setup (Using Batch Files)
+
+### Backend Setup
+```bash
+cd Backend
+```
+Double-click on `Setup.bat` to set up the Python environment, set up PyElastic at Docker, and then set up PyElastic indexes.
+
+After that, run `backend.bat` to start the backend server.
+
+### Frontend Setup
+```bash
+cd Frontend
+```
+Run `Setup.bat` to set up the frontend environment.
+
+Then, run `frontend.bat` to start the frontend server.
+
+## Option 2: Manual Setup
+
 ### Backend Setup
 ```bash
 cd backend
@@ -99,7 +120,7 @@ cp .env.example .env
 # Edit .env with your API endpoints
 ```
 
-### Running the Application
+### Running the Application Manually
 1. Start the backend:
 ```bash
 cd backend
@@ -112,7 +133,7 @@ cd frontend
 npm run dev
 ```
 
-3. Access the application:
+### Access the Application
 - Frontend: http://localhost:5173
 - API Documentation: http://localhost:8000/docs
 
@@ -184,3 +205,35 @@ project/
 - Real-time company updates
 - API rate limiting and monitoring
 - Mobile application development
+
+## 🚀 Project Enhancement Roadmap
+
+### Feature Enhancements
+- **Multi-LLM Support**: Add support for GPT-4, Claude, and other models for comparison and fallback
+- **Personalized Search Profiles**: Allow users to save search preferences and history
+- **Batch Processing**: Enable bulk analysis of multiple companies
+- **Export Functionality**: Add options to export search results and conversations as PDF/CSV
+- **Data Visualization**: Implement interactive charts for company metrics and comparisons
+
+### Performance Optimizations
+- **Caching Layer**: Implement Redis for faster response caching
+- **Parallel Processing**: Optimize backend for concurrent requests
+- **Chunking Strategies**: Improve document chunking for more accurate retrieval
+- **Progressive Web App**: Convert frontend to PWA for offline capabilities
+- **Streaming Responses**: Implement streaming for real-time AI responses
+
+### User Experience Improvements
+- **Dark Mode**: Add light/dark theme toggle for better accessibility
+- **Guided Tours**: Implement interactive tutorials for new users
+- **Voice Interface**: Add speech-to-text for query input and text-to-speech for responses
+- **Mobile-First Design**: Enhance responsive design for better mobile experience
+- **Keyboard Shortcuts**: Add keyboard navigation for power users
+
+### Development Enhancements
+- **Comprehensive Testing**: Add unit and integration tests with high coverage
+- **CI/CD Pipeline**: Implement GitHub Actions for automated testing and deployment
+- **Documentation**: Create detailed API documentation with Swagger UI
+- **Monitoring**: Add Prometheus/Grafana for system performance monitoring
+- **Internationalization**: Support for multiple languages in the interface
+
+By implementing these enhancements, YC Scout will offer a more robust, user-friendly experience with advanced capabilities that set it apart from similar solutions.
